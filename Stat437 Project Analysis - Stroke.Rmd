@@ -5,7 +5,6 @@ date: "3/4/2021"
 output: html_document
 ---
 
-```{r}
 # libraries
 library(tableone)
 library(Matching)
@@ -20,17 +19,26 @@ stroke <- vroom::vroom("~/Documents/Winter 2021/Strokesdataset.csv")
 stroke$gender <- as.factor(stroke$gender)
 stroke$heart_disease <- as.factor(stroke$heart_disease)
 stroke$ever_married <- as.factor(stroke$ever_married)
-stroke$work_type <- as.factor(stroke$work_type)
 stroke$Residence_type <- as.factor(stroke$Residence_type)
 stroke$smoking_status <- as.factor(stroke$smoking_status)
 
-xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", "work_type", "Residence_type", "avg_glucose_level", "bmi", "smoking_status")
+for(i in 1:length(stroke$work_type)) {
+        if(stroke$work_type[i] == "Self-employed") {
+                stroke$work_type[i] = 1
+        } else {
+                stroke$work_type[i] = 0
+        }
+}
+
+stroke$work_type <- as.factor(stroke$work_type)
+
+xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", "Residence_type", "avg_glucose_level", "bmi", "smoking_status")
 ```
 
 
 # Create Table 1
 ```{r}
-table1 <- CreateTableOne(vars = xvars, strata = "stroke", data = stroke, test = FALSE)
+table1 <- CreateTableOne(vars = xvars, strata = "work_type", data = stroke, test = FALSE)
 print(table1, smd = TRUE)
 ```
 
