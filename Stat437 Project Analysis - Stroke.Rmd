@@ -20,18 +20,20 @@ stroke <- vroom::vroom("~/Documents/Winter 2021/Strokesdataset.csv")
 stroke$gender <- as.factor(stroke$gender)
 stroke$heart_disease <- as.factor(stroke$heart_disease)
 stroke$ever_married <- as.factor(stroke$ever_married)
+stroke$is_self_employed <- stroke$work_type
 stroke$Residence_type <- as.factor(stroke$Residence_type)
 stroke$smoking_status <- as.factor(stroke$smoking_status)
 
-for(i in 1:length(stroke$work_type)) {
-        if(stroke$work_type[i] == "Self-employed") {
-                stroke$work_type[i] = 1
+
+for(i in 1:length(stroke$is_self_employed)) {
+        if(stroke$is_self_employed[i] == "Self-employed") {
+                stroke$is_self_employed[i] = 1
         } else {
-                stroke$work_type[i] = 0
+                stroke$is_self_employed[i] = 0
         }
 }
 
-stroke$work_type <- as.factor(stroke$work_type)
+stroke$is_self_employed <- as.factor(stroke$is_self_employed)
 
 xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", "Residence_type", "avg_glucose_level", "bmi", "smoking_status")
 ```
@@ -39,7 +41,7 @@ xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", "Re
 
 # Create Table 1
 ```{r}
-table1 <- CreateTableOne(vars = xvars, strata = "work_type", data = stroke, test = FALSE)
+table1 <- CreateTableOne(vars = xvars, strata = "is_self_employed", data = stroke, test = FALSE)
 print(table1, smd = TRUE)
 ```
 
