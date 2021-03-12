@@ -5,6 +5,7 @@ date: "3/4/2021"
 output: html_document
 ---
 
+```{r}
 # libraries
 library(tableone)
 library(Matching)
