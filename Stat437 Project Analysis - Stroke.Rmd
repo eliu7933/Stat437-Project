@@ -21,12 +21,13 @@ stroke <- vroom::vroom("~/Documents/Winter 2021/Strokesdataset.csv")
 stroke$gender <- as.factor(stroke$gender)
 stroke$heart_disease <- as.factor(stroke$heart_disease)
 stroke$ever_married <- as.factor(stroke$ever_married)
-stroke$is_self_employed <- stroke$work_type
 stroke$Residence_type <- as.factor(stroke$Residence_type)
 stroke$smoking_status <- as.factor(stroke$smoking_status)
 
-# Create new column "is_self_employed" changing work_type variable to binary outcome 
-# (self-employed = 1, not self-emplyed = 0)
+# Create new column "is_self_employed"
+stroke$is_self_employed <- stroke$work_type
+
+# Turn is_self_employed variables as binary outcome based off of work_type variables
 for(i in 1:length(stroke$is_self_employed)) {
         if(stroke$is_self_employed[i] == "Self-employed") {
                 stroke$is_self_employed[i] = 1
@@ -35,7 +36,7 @@ for(i in 1:length(stroke$is_self_employed)) {
         }
 }
 
-# Change variables in newly created is_self_employed column to factor
+# Change is_self_employed column to factor
 stroke$is_self_employed <- as.factor(stroke$is_self_employed)
 
 # Create list of covariates to be used in following Table 1
