@@ -1,6 +1,6 @@
 ---
 title: "Stat437 Project Analysis - Stroke"
-author: "Emily Liu"
+author: "Emily Liu and Aaron Chan"
 date: "3/4/2021"
 output: html_document
 ---
@@ -11,12 +11,13 @@ library(tableone)
 library(Matching)
 library(tidyverse)
 
-# read in dataset
+# read in Prediction of Cerebral Stroke dataset (Source: https://dataverse.harvard.edu/file.xhtml?fileId=4402679&version=1.0)
 stroke <- vroom::vroom("~/Documents/Winter 2021/Strokesdataset.csv")
+```
 
-# binary outcomes: hypertension, heart disease, ever married, residence type,
-
-# account for categorical variables
+# Data cleaning
+```{r}
+# Change all categorical variables to factors
 stroke$gender <- as.factor(stroke$gender)
 stroke$heart_disease <- as.factor(stroke$heart_disease)
 stroke$ever_married <- as.factor(stroke$ever_married)
@@ -24,7 +25,8 @@ stroke$is_self_employed <- stroke$work_type
 stroke$Residence_type <- as.factor(stroke$Residence_type)
 stroke$smoking_status <- as.factor(stroke$smoking_status)
 
-
+# Create new column "is_self_employed" changing work_type variable to binary outcome 
+# (self-employed = 1, not self-emplyed = 0)
 for(i in 1:length(stroke$is_self_employed)) {
         if(stroke$is_self_employed[i] == "Self-employed") {
                 stroke$is_self_employed[i] = 1
@@ -33,53 +35,15 @@ for(i in 1:length(stroke$is_self_employed)) {
         }
 }
 
+# Change variables in newly created is_self_employed column to factor
 stroke$is_self_employed <- as.factor(stroke$is_self_employed)
 
+# Create list of covariates to be used in following Table 1
 xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", "Residence_type", "avg_glucose_level", "bmi", "smoking_status")
 ```
-
 
 # Create Table 1
 ```{r}
 table1 <- CreateTableOne(vars = xvars, strata = "is_self_employed", data = stroke, test = FALSE)
 print(table1, smd = TRUE)
 ```
-
-
-# Is there an association between variables for response?
-```{r}
-
-```
-
-
-# Perform logisitc regression
-```{r}
-# logistic regression model
-reg_model <- glm(data = stroke, stroke ~ gender + age + hypertension + heart_disease + ever_married + work_type + Residence_type + avg_glucose_level + bmi + smoking_status, family = binomial())
-
-# Plot propensity scores
-# ??? what would the treatment be?
-pscores <- reg_model$fitted.values
-
-hist_trt <- hist(pscores[stroke$treat == 1], plot = FALSE)
-hist_ctrl <- hist(pscores[stroke$treat == 0], plot = FALSE)
-hist_ctrl$counts = -hist_ctrl$counts
-hmax <- max(hist_trt$counts)
-hmin <- min(hist_ctrl$counts)
-X = c(hist_trt$breaks, hist_ctrl$breaks)
-xmax <- max(X)
-xmin <- min(X)
-plot(hist_trt,
-     ylim = c(hmin, hmax),
-     xlim = c(xmin, xmax),
-     main = "",
-     xlab = "", 
-     axes = F)
-lines(hist_ctrl)
-```
-
-# Matching treated individual with control individual
-```{r}
-
-```
-
