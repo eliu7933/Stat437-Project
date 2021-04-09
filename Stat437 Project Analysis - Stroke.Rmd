@@ -1,22 +1,24 @@
 ---
 title: "Stat437 Project Analysis - Stroke"
-author: "Emily Liu and Aaron Chan"
+author: "Emily Liu"
 date: "3/4/2021"
 output: html_document
 ---
 
-```{r}
-# libraries
-library(tableone)
+```{r include = FALSE}
 library(Matching)
 library(tidyverse)
+library(tableone)
 
-# read in Prediction of Cerebral Stroke dataset (Source: https://dataverse.harvard.edu/file.xhtml?fileId=4402679&version=1.0)
-stroke <- vroom::vroom("~/Documents/Winter 2021/Strokesdataset.csv")
+# setwd("~/Documents/Winter 2021/Stat437")
+
+# read in Prediction of Cerebral Stroke dataset
+# Source: https://dataverse.harvard.edu/file.xhtml?fileId=4402679&version=1.0
+stroke <- vroom::vroom("~/Documents/Winter 2021/Stat437/Strokesdataset.csv")
 ```
 
 # Data cleaning
-```{r}
+```{r include = FALSE}
 # Change all categorical variables to factors
 stroke$gender <- as.factor(stroke$gender)
 stroke$heart_disease <- as.factor(stroke$heart_disease)
@@ -36,8 +38,10 @@ for(i in 1:length(stroke$is_self_employed)) {
         }
 }
 
-# Change is_self_employed column to factor
+# Change variables in newly created is_self_employed column to factor
 stroke$is_self_employed <- as.factor(stroke$is_self_employed)
+
+write.csv(x = stroke, file = "strokeClean.csv")
 
 # Create list of covariates to be used in following Table 1
 xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", "Residence_type", "avg_glucose_level", "bmi", "smoking_status")
@@ -48,3 +52,95 @@ xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", "Re
 table1 <- CreateTableOne(vars = xvars, strata = "is_self_employed", data = stroke, test = FALSE)
 print(table1, smd = TRUE)
 ```
+
+# Perform logisitc regression
+# Examine the distribution of propensity scores for treated and untreated individuals.
+```{r}
+# logistic regression model
+# stroke is outcome (exclude from logistic regression model)
+# is_self employed is treatment
+reg_model <- glm(data = stroke, is_self_employed ~ gender + age + hypertension + 
+                         heart_disease + ever_married + Residence_type + 
+                         avg_glucose_level + bmi + smoking_status, 
+                 family = binomial())
+
+# Plot propensity scores
+pscores <- reg_model$fitted.values
+
+hist_trt <- hist(pscores[stroke$is_self_employed == 1], plot = FALSE)
+hist_ctrl <- hist(pscores[stroke$is_self_employed == 0], plot = FALSE)
+hist_ctrl$counts = -hist_ctrl$counts
+hmax <- max(hist_trt$counts)
+hmin <- min(hist_ctrl$counts)
+X = c(hist_trt$breaks, hist_ctrl$breaks)
+xmax <- max(X)
+xmin <- min(X)
+plot(hist_trt,
+     ylim = c(hmin, hmax),
+     xlim = c(xmin, xmax),
+     main = "",
+     xlab = "", 
+     axes = F)
+lines(hist_ctrl)
+axis(1, at = seq(0, 1, by = 0.1))
+axis(2, at = seq(10, -10, by = -1)) # ***fix axis
+```
+
+
+# Subset your data to consider only treated individuals with a propensity score less than the maximum propensity score of the untreated and consider only untreated individuals with a propensity score greater than the minimum propensity score of the treated individuals. Report the number of individuals excluded.
+```{r}
+# treated individuals
+trt_pscores <- data.frame("self_employed" = pscores[stroke$is_self_employed == 1]) %>% 
+        filter(!is.na(self_employed))
+min_trt_pscore <- min(trt_pscores) # min for treated
+
+# not treated individuals
+ntrt_pscores <- data.frame("not_self_employed" = pscores[stroke$is_self_employed == 0]) %>%
+        filter(!is.na(not_self_employed))
+max_ntrt_pscore <- max(ntrt_pscores) # max for untreated
+
+
+# treated individuals < maximum propensity score of the untreated
+sum(trt_pscores < max_ntrt_pscore) # none are excluded
+
+# untreated individuals > minimum propensity score of the treated individuals
+sum(ntrt_pscores > min_trt_pscore) # 24546/24563 are included; 17 excluded
+```
+
+
+# Apply propensity score matching and create Table 1
+```{r}
+# SEE HW 6 FOR REFERENCE
+
+stroke <- read.csv("strokeClean.csv")
+
+set.seed(12345)
+
+logit <- function(p) {
+        log(p) - log(1-p)
+}
+
+psmatch <- Match(Tr = stroke$is_self_employed, M = 1, X = logit(pscores), replace = FALSE)
+matching_df <- stroke[c(psmatch$index.treated, psmatch$index.control),]
+
+matching_t1 <- CreateTableOne(vars = xvars, strata = "is_self_employed",
+                              data = matching_df, test = FALSE)
+print(matching_t1, smd = TRUE)
+```
+
+
+# Use the matched data set to carry out the outcome analysis.
+```{r}
+
+```
+
+
+# Perform a sensitivity analysis by, for example, adjusting the caliper, the number of matches, or the covariates included in calculating the propensity scores.
+```{r}
+
+```
+
+
+
+
+
