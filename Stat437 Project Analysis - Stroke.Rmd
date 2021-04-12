@@ -10,11 +10,9 @@ library(Matching)
 library(tidyverse)
 library(tableone)
 
-setwd("~/Documents/Winter 2021/Stat437")
-
 # read in Prediction of Cerebral Stroke dataset
 # Source: https://dataverse.harvard.edu/file.xhtml?fileId=4402679&version=1.0
-stroke <- vroom::vroom("~/Documents/Winter 2021/Stat437/Strokesdataset.csv")
+stroke <- vroom::vroom("~/Projects/Stat437-Project/Strokedataset.csv")
 ```
 
 # Data cleaning
@@ -86,12 +84,13 @@ xmin <- min(X)
 plot(hist_trt,
      ylim = c(hmin, hmax),
      xlim = c(xmin, xmax),
-     main = "",
-     xlab = "", 
+     ylab = "Number of people",
+     main = "Propensity Scores by Group",
+     xlab = "Propensity Score", 
      axes = F)
 lines(hist_ctrl)
 axis(1, at = seq(0, 1, by = 0.1))
-axis(2, at = seq(10, -10, by = -1)) # ***fix axis
+axis(2, at = seq(10, -0, by = -1)) # ***fix axis
 ```
 
 
@@ -112,7 +111,10 @@ max_ntrt_pscore <- max(ntrt_pscores) # max for untreated
 sum(trt_pscores < max_ntrt_pscore) # none are excluded
 
 # untreated individuals > minimum propensity score of the treated individuals
-sum(ntrt_pscores > min_trt_pscore) # 24546/24563 are included; 17 excluded
+sum(ntrt_pscores > min_trt_pscore)
+nrow(ntrt_pscores) - sum(ntrt_pscores > min_trt_pscore) # 226 were excluded
+nrow(trt_pscores) - sum(trt_pscores < max_ntrt_pscore) # 1 was excluded 
+
 ```
 
 
