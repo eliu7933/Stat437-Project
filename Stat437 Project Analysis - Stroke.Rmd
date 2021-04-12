@@ -10,7 +10,7 @@ library(Matching)
 library(tidyverse)
 library(tableone)
 
-# setwd("~/Documents/Winter 2021/Stat437")
+setwd("~/Documents/Winter 2021/Stat437")
 
 # read in Prediction of Cerebral Stroke dataset
 # Source: https://dataverse.harvard.edu/file.xhtml?fileId=4402679&version=1.0
@@ -19,6 +19,9 @@ stroke <- vroom::vroom("~/Documents/Winter 2021/Stat437/Strokesdataset.csv")
 
 # Data cleaning
 ```{r include = FALSE}
+
+stroke <- na.omit(stroke)
+
 # Change all categorical variables to factors
 stroke$gender <- as.factor(stroke$gender)
 stroke$heart_disease <- as.factor(stroke$heart_disease)
@@ -41,17 +44,22 @@ for(i in 1:length(stroke$is_self_employed)) {
 # Change variables in newly created is_self_employed column to factor
 stroke$is_self_employed <- as.factor(stroke$is_self_employed)
 
+
+
 write.csv(x = stroke, file = "strokeClean.csv")
 
 # Create list of covariates to be used in following Table 1
-xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", "Residence_type", "avg_glucose_level", "bmi", "smoking_status")
+xvars <- c("gender", "age", "hypertension", "heart_disease", "ever_married", 
+           "Residence_type", "avg_glucose_level", "bmi", "smoking_status")
 ```
+
 
 # Create Table 1
 ```{r}
 table1 <- CreateTableOne(vars = xvars, strata = "is_self_employed", data = stroke, test = FALSE)
 print(table1, smd = TRUE)
 ```
+
 
 # Perform logisitc regression
 # Examine the distribution of propensity scores for treated and untreated individuals.
@@ -132,12 +140,25 @@ print(matching_t1, smd = TRUE)
 # Use the matched data set to carry out the outcome analysis.
 ```{r}
 
+outcome_analysis <- function (df) {
+        
+trt <- df %>% filter(is_self_employed == 1)
+ctrl <- df %>% filter(is_self_employed == 0)
+
+return(t.test(y = trt$stroke, x = ctrl$stroke, paired = TRUE))
+        
+}
+outcome_analysis(matching_df)
 ```
+Self-employed does not make a difference in stroke
 
 
 # Perform a sensitivity analysis by, for example, adjusting the caliper, the number of matches, or the covariates included in calculating the propensity scores.
 ```{r}
-
+sens <- Match(Tr = stroke$is_self_employed, M = 1, X = logit(pscores), 
+              caliper = 0.1, replace = FALSE)
+sens_df <- stroke[c(sens$index.treated, sens$index.control),]
+outcome_analysis(sens_df)
 ```
 
 
