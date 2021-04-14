@@ -158,9 +158,12 @@ Self-employed does not make a difference in stroke
 # Perform a sensitivity analysis by, for example, adjusting the caliper, the number of matches, or the covariates included in calculating the propensity scores.
 ```{r}
 sens <- Match(Tr = stroke$is_self_employed, M = 1, X = logit(pscores), 
-              caliper = 0.1, replace = FALSE)
+              caliper = 0.0001, replace = FALSE)
 sens_df <- stroke[c(sens$index.treated, sens$index.control),]
+sens_t1 <- CreateTableOne(vars = xvars, strata = "is_self_employed",
+                              data = sens_df, test = FALSE)
 outcome_analysis(sens_df)
+print(sens_t1)
 ```
 
 
